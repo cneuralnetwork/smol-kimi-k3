@@ -1,0 +1,20 @@
+{
+  "vocab_size": 8192,
+  "hidden_size": 320,
+  "num_layers": 13,
+  "num_heads": 5,
+  "mla_latent_size": 128,
+  "decay_rank": 32,
+  "short_conv_kernel": 4,
+  "attnres_block_size": 4,
+  "latent_moe_size": 160,
+  "routed_expert_hidden_size": 168,
+  "shared_expert_hidden_size": 192,
+  "num_routed_experts": 32,
+  "num_shared_experts": 2,
+  "experts_per_token": 4,
+  "situ_beta1": 4.0,
+  "situ_beta2": 25.0,
+  "kda_gmin": -5.0,
+  "tie_word_embeddings": true
+}

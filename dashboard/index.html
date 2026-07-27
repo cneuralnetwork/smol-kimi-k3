@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>smol-kimi-k3 training desk</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">LOCAL GPU / TINYSTORIES</p>
+          <h1>smol-kimi-k3 training desk</h1>
+        </div>
+        <div class="status-line">
+          <span id="status-dot" class="status-dot"></span>
+          <span id="status">waiting</span>
+        </div>
+      </header>
+
+      <section class="readout" aria-label="Latest training metrics">
+        <div><span>step</span><strong id="step">—</strong></div>
+        <div><span>train loss</span><strong id="train-loss">—</strong></div>
+        <div><span>val loss</span><strong id="val-loss">—</strong></div>
+        <div><span>tokens / sec</span><strong id="throughput">—</strong></div>
+        <div><span>VRAM GiB</span><strong id="vram">—</strong></div>
+      </section>
+
+      <section class="plot-section">
+        <div class="section-heading">
+          <h2>Loss trace</h2>
+          <span id="updated">not connected</span>
+        </div>
+        <div class="plot-frame">
+          <img id="loss-plot" src="/artifacts/loss.png" alt="Matplotlib chart of training and validation loss">
+        </div>
+      </section>
+
+      <section class="sample-section">
+        <div class="section-heading">
+          <h2>Latest sample</h2>
+          <span id="sample-step">not generated</span>
+        </div>
+        <p id="sample-prompt" class="prompt"></p>
+        <pre id="sample">A sample will appear after the first inference interval.</pre>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

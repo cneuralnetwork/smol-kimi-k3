@@ -1,0 +1,8 @@
+torch>=2.5
+fla-core>=0.5.1
+datasets>=3.0
+tokenizers>=0.20
+numpy>=2.0
+matplotlib>=3.9
+tqdm>=4.66
+pytest>=8.0
