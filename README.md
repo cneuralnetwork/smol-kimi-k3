@@ -167,7 +167,7 @@ The checked-in configuration lives in
 ### 1. Install
 
 ```bash
-git clone <your-repository-url> smol-kimi-k3
+git clone https://github.com/cneuralnetwork/smol-kimi-k3.git
 cd smol-kimi-k3
 python3 -m pip install -r requirements.txt
 ```
