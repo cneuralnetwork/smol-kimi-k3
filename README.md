@@ -244,6 +244,41 @@ python3 generate.py checkpoints/k3-50m/best.pt \
   --prompt "Once upon a time, a little fox"
 ```
 
+## Download the trained model
+
+The best 10,000-step TinyStories checkpoint is published in the
+[`v0.1.0-tinystories` GitHub Release](https://github.com/cneuralnetwork/smol-kimi-k3/releases/tag/v0.1.0-tinystories).
+It uses BF16 SafeTensors and does not include optimizer state.
+
+```bash
+mkdir -p pretrained/smol-kimi-k3
+
+gh release download v0.1.0-tinystories \
+  --repo cneuralnetwork/smol-kimi-k3 \
+  --dir pretrained/smol-kimi-k3
+
+python3 generate.py pretrained/smol-kimi-k3/model.safetensors \
+  --prompt "Once upon a time, a little fox"
+```
+
+Published bundle:
+
+| File | Purpose |
+|---|---|
+| `model.safetensors` | 49.02M BF16 model weights |
+| `config.json` | Exact architecture configuration |
+| `tokenizer.json` | TinyStories 8,192-token BPE tokenizer |
+| `training_metadata.json` | Steps, validation loss, run settings, and final state |
+| `sha256sums.txt` | Integrity checksums for every bundle artifact |
+
+The selected checkpoint is step **9,750** with validation loss **1.6277**.
+To reproduce the export from a local training checkpoint:
+
+```bash
+python3 scripts/export_model.py checkpoints/k3-50m/best.pt \
+  --dashboard-state checkpoints/k3-50m/dashboard_state.json
+```
+
 ## Live training dashboard
 
 The monitor deliberately stays simple: the trainer writes durable files, and

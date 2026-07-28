@@ -1,7 +1,11 @@
+import json
+
 import torch
+from safetensors.torch import save_model
 
 from k3 import K3Config, K3ForCausalLM
 from k3.monitoring import TrainingMonitor
+from generate import load_trained_model
 
 
 def tiny_config() -> K3Config:
@@ -104,3 +108,21 @@ def test_training_monitor_writes_dashboard_artifacts(tmp_path) -> None:
     state = (tmp_path / "dashboard_state.json").read_text(encoding="utf-8")
     assert '"train_loss": 9.1' in state
     assert "there was a fox" in state
+
+
+def test_safetensors_inference_bundle_round_trip(tmp_path) -> None:
+    torch.manual_seed(17)
+    model = K3ForCausalLM(tiny_config()).eval()
+    config_path = tmp_path / "config.json"
+    weights_path = tmp_path / "model.safetensors"
+    config_path.write_text(
+        json.dumps(model.config.to_dict()),
+        encoding="utf-8",
+    )
+    save_model(model, weights_path)
+    restored = load_trained_model(weights_path, torch.device("cpu"))
+    input_ids = torch.randint(0, 128, (1, 6))
+    with torch.no_grad():
+        expected = model(input_ids).logits
+        actual = restored(input_ids).logits
+    torch.testing.assert_close(expected, actual)
