@@ -325,6 +325,12 @@ class StableLatentMoE(nn.Module):
         next_bias -= next_bias.mean()
         self.router_bias.copy_(next_bias.to(self.router_bias.dtype))
 
+    # Use vectorized path only for decode-sized inputs (≤256 tokens).
+    # Training with batch 16 / seq 256 has 4096 tokens; the three
+    # sg[selected] gathers in the vectorized path materialize ~5 GiB
+    # of float32 values before activations/autograd, which OOMs on 8 GB GPUs.
+    _MAX_VEC_TOKENS: int = 256
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         shape = x.shape
         flat_x = x.reshape(-1, shape[-1])
@@ -337,7 +343,11 @@ class StableLatentMoE(nn.Module):
         weights = selected_scores / selected_scores.sum(dim=-1, keepdim=True).clamp_min(1e-9)
 
         latent = self.down_proj(flat_x)
-        routed = self._routed_bank_vectorized(latent, selected, weights)
+        routed = (
+            self._routed_bank_vectorized(latent, selected, weights)
+            if flat_x.shape[0] <= self._MAX_VEC_TOKENS
+            else self._routed_bank_loop(latent, selected, weights)
+        )
 
         if self.training:
             self._quantile_balance(scores.detach(), cutoff.detach())
@@ -356,6 +366,26 @@ class StableLatentMoE(nn.Module):
         su = torch.stack([e.up_proj.weight for e in self.routed_experts])
         sd = torch.stack([e.down_proj.weight for e in self.routed_experts])
         return sg, su, sd
+
+    def _routed_bank_loop(
+        self, latent: torch.Tensor, selected: torch.Tensor, weights: torch.Tensor
+    ) -> torch.Tensor:
+        """Per-expert loop forward for training / large token counts.
+
+        Avoids materializing a full [N, K, H, L] weight tensor per token,
+        which would be N * K * H * L * 3 * 4 B (~5 GiB for N=4096). Each
+        expert only processes the tokens that were actually routed to it.
+        """
+        routed = torch.zeros_like(latent)
+        for expert_index, expert in enumerate(self.routed_experts):
+            token_indices, slots = torch.where(selected == expert_index)
+            if token_indices.numel() == 0:
+                continue
+            contribution = expert(latent[token_indices])
+            expert_weights = weights[token_indices, slots, None].to(contribution.dtype)
+            contribution = contribution * expert_weights
+            routed.index_add_(0, token_indices, contribution)
+        return routed
 
     def _routed_bank_vectorized(
         self, latent: torch.Tensor, selected: torch.Tensor, weights: torch.Tensor
