@@ -24,7 +24,7 @@ def load_trained_model(
         checkpoint = torch.load(
             checkpoint_path,
             map_location="cpu",
-            weights_only=False,
+            weights_only=True,
         )
         config = K3Config(**checkpoint["config"])
         model = K3ForCausalLM(config)
